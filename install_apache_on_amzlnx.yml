@@ -1,0 +1,11 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: install apache on Amazon Linux Distro
+    yum:
+      name: httpd
+      state: latest
+    when: ansible_distribution == "Amazon"
