@@ -1,9 +1,10 @@
+[web_servers]
 ubuntu@54.204.100.90
-
 ubuntu@18.234.170.65
 
+[db_servers]
 ubuntu@34.234.97.226
 
+[file_servers]
 ec2-user@18.209.13.157
-
 ec2-user@50.19.143.206
