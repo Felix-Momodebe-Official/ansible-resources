@@ -1,0 +1,90 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+    - name: install updates (Amazon)
+      tags: always
+      yum:
+        update_only: yes
+        update_cache: yes
+      when: ansible_distribution == "Amazon"
+
+    - name: start httpd (Amazon)
+      tags: apache,Amazon,httpd
+      service: 
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_distribution == "Amazon"
+
+    - name: change e-mail address for admin
+      tags: apache,Amazon,httpd
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^ServerAdmin'
+        line: ServerAdmin felixm@gmail.com
+      when: ansible_distribution == "Amazon"
+      register: httpd
+
+
+    - name: restart httpd (Amazon)
+      tags: apache,Amazon,httpd
+      service:
+        name: httpd
+        state: restarted
+      when: httpd.changed 
+  
+
+    - name: install updates (Ubuntu)
+      tags: always
+      apt:
+        upgrade: dist
+        update_cache: yes
+      when: ansible_distribution == "Ubuntu"
+
+
+- hosts: all
+  become: true
+  tasks:
+    - name: create Felix user
+      tags: always
+      user:
+        name: Felix
+        group: root
+
+
+    - name: add ssh key for Felix
+      tags: always
+      authorized_key:
+        user: Felix
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKf3a4a3I9ODEq9YvZloGMMw8rG60b26LWF0KzKAUZ7L ansible"
+
+
+    - name: add sudoers file for Felix
+      tags: always
+      copy:
+        src: sudoer_Felix
+        dest: /etc/sudoers.d/Felix
+        owner: root
+        group: root
+        mode: 0440
+
+
+
+    - name: create felix-ayo user
+      tags: always
+      user:
+        name: felix-ayo
+        group: root
+
+
+    - name: add ssh key for felix-ayo 
+      tags: always
+      authorized_key:
+        user: felix-ayo
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKf3a4a3I9ODEq9YvZloGMMw8rG60b26LWF0KzKAUZ7L ansible"
+
+
+

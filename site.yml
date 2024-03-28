@@ -7,16 +7,101 @@
     - name: install updates (Amazon)
       tags: always
       yum:
-        update_only: yes
         update_cache: yes
+        changed_when: false
       when: ansible_distribution == "Amazon"
+
+    - name: start httpd (Amazon)
+      tags: apache,Amazon,httpd
+      service: 
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_distribution == "Amazon"
+
+    - name: change e-mail address for admin
+      tags: apache,Amazon,httpd
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^ServerAdmin'
+        line: ServerAdmin felixm@gmail.com
+      when: ansible_distribution == "Amazon"
+      register: httpd
+
+
+    - name: restart httpd (Amazon)
+      tags: apache,Amazon,httpd
+      service:
+        name: httpd
+        state: restarted
+      when: httpd.changed 
+  
 
     - name: install updates (Ubuntu)
       tags: always
       apt:
-        upgrade: dist
         update_cache: yes
+        changed_when: false
       when: ansible_distribution == "Ubuntu"
+
+
+- hosts: all
+  become: true
+  tasks:
+    - name: create Felix user
+      tags: always
+      user:
+        name: Felix
+        group: root
+
+
+    - name: add ssh key for Felix
+      tags: always
+      authorized_key:
+        user: Felix
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKf3a4a3I9ODEq9YvZloGMMw8rG60b26LWF0KzKAUZ7L ansible"
+
+
+    - name: create felix-ayo user
+      tags: always
+      user:
+        name: felix-ayo
+        group: root
+
+
+    - name: add ssh key for felix-ayo
+      tags: always
+      authorized_key:
+        user: felix-ayo
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKf3a4a3I9ODEq9YvZloGMMw8rG60b26LWF0KzKAUZ7L ansible"
+
+
+
+- hosts: workstations
+  become: true
+  tasks:
+
+    - name: install unzip
+      package:
+        name: unzip
+
+    - name: install terraform
+      unarchive:
+        src: https://releases.hashicorp.com/terraform/0.12.28/terraform_0.12.28_linux_amd64.zip
+        dest: /usr/local/bin
+        remote_src: yes
+        mode: 0755
+        owner: root
+        group: root
+
+    - name: copy default html file for site
+      tags: apache,apache2,httpd,Amazon
+      copy:
+        src: /home/felix/ansible-resources/files/default_site.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: 0644
 
 
 - hosts: web_severs
@@ -41,6 +126,7 @@
         - php
       state: latest
     when: ansible_distribution == "Amazon"
+  
 
 - hosts: db_servers
   become: true
